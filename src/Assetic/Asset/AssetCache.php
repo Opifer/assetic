@@ -46,9 +46,9 @@ class AssetCache implements AssetInterface
         $this->asset->clearFilters();
     }
 
-    public function load(FilterInterface $additionalFilter = null)
+    public function load(FilterInterface $additionalFilter = null, $lastModified = null)
     {
-        $cacheKey = self::getCacheKey($this->asset, $additionalFilter, 'load');
+        $cacheKey = self::getCacheKey($this->asset, $additionalFilter, 'load', $lastModified);
         if ($this->cache->has($cacheKey)) {
             $this->asset->setContent($this->cache->get($cacheKey));
 
@@ -59,9 +59,9 @@ class AssetCache implements AssetInterface
         $this->cache->set($cacheKey, $this->asset->getContent());
     }
 
-    public function dump(FilterInterface $additionalFilter = null)
+    public function dump(FilterInterface $additionalFilter = null, $lastModified = null)
     {
-        $cacheKey = self::getCacheKey($this->asset, $additionalFilter, 'dump');
+        $cacheKey = self::getCacheKey($this->asset, $additionalFilter, 'dump', $lastModified);
         if ($this->cache->has($cacheKey)) {
             return $this->cache->get($cacheKey);
         }
@@ -144,7 +144,7 @@ class AssetCache implements AssetInterface
      *
      * @return string A key for identifying the current asset
      */
-    private static function getCacheKey(AssetInterface $asset, FilterInterface $additionalFilter = null, $salt = '')
+    private static function getCacheKey(AssetInterface $asset, FilterInterface $additionalFilter = null, $salt = '', $lastModified = null)
     {
         if ($additionalFilter) {
             $asset = clone $asset;
@@ -154,7 +154,11 @@ class AssetCache implements AssetInterface
         $cacheKey  = $asset->getSourceRoot();
         $cacheKey .= $asset->getSourcePath();
         $cacheKey .= $asset->getTargetPath();
-        $cacheKey .= $asset->getLastModified();
+        if ($lastModified !== null) {
+            $cacheKey .= $lastModified;
+        } else {
+            $cacheKey .= $asset->getLastModified();
+        }
 
         foreach ($asset->getFilters() as $filter) {
             if ($filter instanceof HashableInterface) {
